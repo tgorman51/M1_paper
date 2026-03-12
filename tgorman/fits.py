@@ -2,7 +2,8 @@ import numpy
 
 from astropy.io import fits
 
-FITS_FILE_PATH = "../3dmap_XYZvel.fits"
+DATA_NAME="sii_sii"
+FITS_FILE_PATH = f"../3dmap_XYZ{DATA_NAME}.fits"
 SEPARATOR_STRING = "\n==================================================\n"
 
 numpy.set_printoptions(threshold=numpy.inf)
@@ -31,7 +32,7 @@ def print_data_ranges(data):
     print("X range:", x.min(), x.max())
     print("Y range:", y.min(), y.max())
     print("Z range:", z.min(), z.max())
-    print("Vel range:", flux.min(), flux.max())
+    print(f"{DATA_NAME} range:", flux.min(), flux.max())
 
 def print_data(data):
     print(SEPARATOR_STRING)
@@ -44,8 +45,8 @@ def create_csv(data):
     print("Converting data to csv...")
 
     # Add a row for high-end flux to control color map range in OpenSpace
-    new_row = numpy.array([0, 0, 0, 1000000000000])
-    data = numpy.vstack((data, new_row))
+#     new_row = numpy.array([0, 0, 0, 1000000000000])
+#     data = numpy.vstack((data, new_row))
     
     # Get coordinate columns
     x_pc = data[:, 0]
@@ -58,8 +59,8 @@ def create_csv(data):
     y_m = y_pc * pc_to_m
     z_m = z_pc * pc_to_m
 
-    # Get flux column
-    flux = data[:, 3]
+    # Get data column
+    data_column = data[:, 3]
 
     # Invert Flux data
     # to handle color mappings which use the lowest values as the brightest color
@@ -69,11 +70,11 @@ def create_csv(data):
     # flux_inverted = flux_max - (flux - flux_min)
 
     # Stack columns into numpy array
-    final_data = numpy.column_stack((x_m, y_m, z_m, flux))
+    final_data = numpy.column_stack((x_m, y_m, z_m, data_column))
 
     # Save to CSV
-    filename = "m1_xyzflux_meters_highfluxrow.csv"
-    numpy.savetxt(filename, final_data, delimiter=",", header="X,Y,Z,flux", comments="")
+    filename = f"m1_xyz{DATA_NAME}_meters.csv"
+    numpy.savetxt(filename, final_data, delimiter=",", header=f"X,Y,Z,{DATA_NAME}", comments="")
 
     print("Done\n"
           f"Created file \"{filename}\"")
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--create-csv", action="store_true")
+    parser.add_argument("--csv", action="store_true")
     args = parser.parse_args()
 
-    main(make_csv_file=args.create_csv)
+    main(make_csv_file=args.csv)
