@@ -4,6 +4,7 @@ from astropy.io import fits
 
 DATA_NAME="sii_sii"
 FITS_FILE_PATH = f"../3dmap_XYZ{DATA_NAME}.fits"
+FILE_WRITE_LOCATION = "./fits_csv_output"
 SEPARATOR_STRING = "\n==================================================\n"
 
 numpy.set_printoptions(threshold=numpy.inf)
@@ -74,7 +75,7 @@ def create_csv(data):
 
     # Save to CSV
     filename = f"m1_xyz{DATA_NAME}_meters.csv"
-    numpy.savetxt(filename, final_data, delimiter=",", header=f"X,Y,Z,{DATA_NAME}", comments="")
+    numpy.savetxt(f"{FILE_WRITE_LOCATION}/{filename}", final_data, delimiter=",", header=f"X,Y,Z,{DATA_NAME}", comments="")
 
     print("Done\n"
           f"Created file \"{filename}\"")
