@@ -9,16 +9,19 @@ SEPARATOR_STRING = "\n==================================================\n"
 
 numpy.set_printoptions(threshold=numpy.inf)
 
+
 def print_hdul_info(hdul):
     print("DATA INFO\n"
           "---------")
     print(hdul.info())
+
 
 def print_data_shape(data):
     print(SEPARATOR_STRING)
     print("DATA SHAPE\n"
           "----------")
     print(data.shape)
+
 
 def print_data_ranges(data):
     # Separate columns
@@ -35,11 +38,13 @@ def print_data_ranges(data):
     print("Z range:", z.min(), z.max())
     print(f"{DATA_NAME} range:", flux.min(), flux.max())
 
+
 def print_data(data):
     print(SEPARATOR_STRING)
     print("DATA (First Row)\n"
           "----")
     print(data[0, :])
+
 
 def create_csv(data):
     print(SEPARATOR_STRING)
@@ -48,7 +53,7 @@ def create_csv(data):
     # Add a row for high-end flux to control color map range in OpenSpace
 #     new_row = numpy.array([0, 0, 0, 1000000000000])
 #     data = numpy.vstack((data, new_row))
-    
+
     # Get coordinate columns
     x_pc = data[:, 0]
     y_pc = data[:, 1]
@@ -79,6 +84,7 @@ def create_csv(data):
 
     print("Done\n"
           f"Created file \"{filename}\"")
+
 
 def main(make_csv_file=False):
     hdul = fits.open(FITS_FILE_PATH)
