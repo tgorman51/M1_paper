@@ -1,4 +1,5 @@
 import os
+import argparse
 import numpy
 
 from astropy.io import fits
@@ -7,6 +8,12 @@ FILE_WRITE_LOCATION = "./fits_csv_output"
 SEPARATOR_STRING = "\n==================================================\n"
 
 numpy.set_printoptions(threshold=numpy.inf)
+
+
+def load_fits_data(fits_file_path):
+    hdul = fits.open(fits_file_path)
+    data = hdul[0].data
+    return hdul, data
 
 
 def print_hdul_info(hdul):
@@ -45,11 +52,22 @@ def print_data(data):
     print(data[0, :])
 
 
-def create_csv(data_name, data):
+def inspect_fits_file(fits_file_path, data_name):
+    hdul, data = load_fits_data(fits_file_path)
+
+    print_hdul_info(hdul)
+    print_data_shape(data)
+    print_data_ranges(data_name, data)
+    print_data(data)
+
+
+def create_csv(fits_file_path, data_name):
+    hdul, data = load_fits_data(fits_file_path)
+
     print(SEPARATOR_STRING)
     print("Converting data to csv...")
 
-    # Get coordinate columns
+    # Coordinate columns
     x_pc = data[:, 0]
     y_pc = data[:, 1]
     z_pc = data[:, 2]
@@ -60,18 +78,19 @@ def create_csv(data_name, data):
     y_m = y_pc * pc_to_m
     z_m = z_pc * pc_to_m
 
-    # Get data column
+    # Data column
     data_column = data[:, 3]
 
-    # Stack columns into numpy array
+    # Final output array
     final_data = numpy.column_stack((x_m, y_m, z_m, data_column))
 
     # Ensure output directory exists
     os.makedirs(FILE_WRITE_LOCATION, exist_ok=True)
 
-    # Save to CSV
+    # Output filename
     filename = f"m1_xyz{data_name}_meters.csv"
 
+    # Save CSV
     numpy.savetxt(
         f"{FILE_WRITE_LOCATION}/{filename}",
         final_data,
@@ -84,44 +103,53 @@ def create_csv(data_name, data):
           f"Created file \"{filename}\"")
 
 
-def main(fits_file_path, data_name, make_csv_file=False):
-    hdul = fits.open(fits_file_path)
-    data = hdul[0].data
+def main():
+    parser = argparse.ArgumentParser(
+        description="Utility for inspecting and converting FITS point cloud data."
+    )
 
-    print_hdul_info(hdul)
-    print_data_shape(data)
-    print_data_ranges(data_name, data)
-    print_data(data)
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    if make_csv_file:
-        create_csv(data_name, data)
+    # Inspect command
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Inspect FITS file contents"
+    )
 
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
+    inspect_parser.add_argument(
         "fits_file",
-        help="Path to the FITS file"
+        help="Path to FITS file"
     )
 
-    parser.add_argument(
+    inspect_parser.add_argument(
         "data_name",
-        help="Name of the data field (e.g. flux, sii_sii)"
+        help="Name of data field (e.g. flux, sii_sii)"
     )
 
-    parser.add_argument(
-        "--csv",
-        action="store_true",
-        help="Create CSV output"
+    # CSV command
+    csv_parser = subparsers.add_parser(
+        "csv",
+        help="Convert FITS data to CSV"
+    )
+
+    csv_parser.add_argument(
+        "fits_file",
+        help="Path to FITS file"
+    )
+
+    csv_parser.add_argument(
+        "data_name",
+        help="Name of data field (e.g. flux, sii_sii)"
     )
 
     args = parser.parse_args()
 
-    main(
-        fits_file_path=args.fits_file,
-        data_name=args.data_name,
-        make_csv_file=args.csv
-    )
+    if args.command == "inspect":
+        inspect_fits_file(args.fits_file, args.data_name)
+
+    elif args.command == "csv":
+        create_csv(args.fits_file, args.data_name)
+
+
+if __name__ == "__main__":
+    main()
