@@ -27,7 +27,7 @@ def print_data_ranges(data_name, data):
     x = data[:, 0]
     y = data[:, 1]
     z = data[:, 2]
-    flux = data[:, 3]
+    values = data[:, 3]
 
     print(SEPARATOR_STRING)
     print("COLUMN RANGES\n"
@@ -35,7 +35,7 @@ def print_data_ranges(data_name, data):
     print("X range:", x.min(), x.max())
     print("Y range:", y.min(), y.max())
     print("Z range:", z.min(), z.max())
-    print(f"{data_name} range:", flux.min(), flux.max())
+    print(f"{data_name} range:", values.min(), values.max())
 
 
 def print_data(data):
@@ -84,9 +84,7 @@ def create_csv(data_name, data):
           f"Created file \"{filename}\"")
 
 
-def main(fits_file_path, make_csv_file=False):
-    data_name = os.path.splitext(os.path.basename(fits_file_path))[0]
-
+def main(fits_file_path, data_name, make_csv_file=False):
     hdul = fits.open(fits_file_path)
     data = hdul[0].data
 
@@ -110,6 +108,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "data_name",
+        help="Name of the data field (e.g. flux, sii_sii)"
+    )
+
+    parser.add_argument(
         "--csv",
         action="store_true",
         help="Create CSV output"
@@ -119,5 +122,6 @@ if __name__ == "__main__":
 
     main(
         fits_file_path=args.fits_file,
+        data_name=args.data_name,
         make_csv_file=args.csv
     )
