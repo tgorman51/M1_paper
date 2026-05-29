@@ -1,9 +1,8 @@
+import os
 import numpy
 
 from astropy.io import fits
 
-DATA_NAME="sii_sii"
-FITS_FILE_PATH = f"../3dmap_XYZ{DATA_NAME}.fits"
 FILE_WRITE_LOCATION = "./fits_csv_output"
 SEPARATOR_STRING = "\n==================================================\n"
 
@@ -23,7 +22,7 @@ def print_data_shape(data):
     print(data.shape)
 
 
-def print_data_ranges(data):
+def print_data_ranges(data_name, data):
     # Separate columns
     x = data[:, 0]
     y = data[:, 1]
@@ -36,7 +35,7 @@ def print_data_ranges(data):
     print("X range:", x.min(), x.max())
     print("Y range:", y.min(), y.max())
     print("Z range:", z.min(), z.max())
-    print(f"{DATA_NAME} range:", flux.min(), flux.max())
+    print(f"{data_name} range:", flux.min(), flux.max())
 
 
 def print_data(data):
@@ -46,13 +45,9 @@ def print_data(data):
     print(data[0, :])
 
 
-def create_csv(data):
+def create_csv(data_name, data):
     print(SEPARATOR_STRING)
     print("Converting data to csv...")
-
-    # Add a row for high-end flux to control color map range in OpenSpace
-#     new_row = numpy.array([0, 0, 0, 1000000000000])
-#     data = numpy.vstack((data, new_row))
 
     # Get coordinate columns
     x_pc = data[:, 0]
@@ -68,42 +63,61 @@ def create_csv(data):
     # Get data column
     data_column = data[:, 3]
 
-    # Invert Flux data
-    # to handle color mappings which use the lowest values as the brightest color
-    # flux_min = flux.min()
-    # flux_max = flux.max()
-    #
-    # flux_inverted = flux_max - (flux - flux_min)
-
     # Stack columns into numpy array
     final_data = numpy.column_stack((x_m, y_m, z_m, data_column))
 
+    # Ensure output directory exists
+    os.makedirs(FILE_WRITE_LOCATION, exist_ok=True)
+
     # Save to CSV
-    filename = f"m1_xyz{DATA_NAME}_meters.csv"
-    numpy.savetxt(f"{FILE_WRITE_LOCATION}/{filename}", final_data, delimiter=",", header=f"X,Y,Z,{DATA_NAME}", comments="")
+    filename = f"m1_xyz{data_name}_meters.csv"
+
+    numpy.savetxt(
+        f"{FILE_WRITE_LOCATION}/{filename}",
+        final_data,
+        delimiter=",",
+        header=f"X,Y,Z,{data_name}",
+        comments=""
+    )
 
     print("Done\n"
           f"Created file \"{filename}\"")
 
 
-def main(make_csv_file=False):
-    hdul = fits.open(FITS_FILE_PATH)
+def main(fits_file_path, make_csv_file=False):
+    data_name = os.path.splitext(os.path.basename(fits_file_path))[0]
+
+    hdul = fits.open(fits_file_path)
     data = hdul[0].data
 
     print_hdul_info(hdul)
     print_data_shape(data)
-    print_data_ranges(data)
+    print_data_ranges(data_name, data)
     print_data(data)
 
     if make_csv_file:
-        create_csv(data)
+        create_csv(data_name, data)
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv", action="store_true")
+
+    parser.add_argument(
+        "fits_file",
+        help="Path to the FITS file"
+    )
+
+    parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Create CSV output"
+    )
+
     args = parser.parse_args()
 
-    main(make_csv_file=args.csv)
+    main(
+        fits_file_path=args.fits_file,
+        make_csv_file=args.csv
+    )
